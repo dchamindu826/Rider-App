@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "RapidGoRider",
-    "slug": "RapidGoRider",
+    "name": "RapidGo Rider",
+    "slug": "RapidGo_Rider",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,10 +20,27 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBJNvG1poWaJjVEpiuMvPpPSo7TpgnZgY4"
+        }
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.dchamindu826.RapidGo_Rider"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "70b0e8c1-5530-4c0f-87ff-df029da56f1a"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/70b0e8c1-5530-4c0f-87ff-df029da56f1a"
     }
   }
 }
