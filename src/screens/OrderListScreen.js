@@ -76,7 +76,7 @@ const OrderListScreen = () => {
                 <Text style={styles.restaurantAddress}>{item.restaurant?.address}</Text>
                 
                 <Text style={styles.earningText}>
-                    Your Earning: LKR {formatCurrency((item.deliveryCharge || 0) * 0.70)}
+                    Your Earning: LKR {formatCurrency((item.deliveryCharge || 0) * 0.65)}
                 </Text>
             </View>
             <View style={styles.arrowContainer}>

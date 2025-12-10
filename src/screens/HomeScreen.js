@@ -1,13 +1,13 @@
 // src/screens/HomeScreen.js
-// --- FINAL FIX: (Notification Banner Ain Kala + Notification Dot + Poller Fix) ---
+// --- FINAL FIX: Added Sound Loop & Stop Logic ---
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-    View, Text, StyleSheet, 
-    SafeAreaView, TouchableOpacity, Image, 
+    View, Text, StyleSheet, TouchableOpacity, Image, 
     ActivityIndicator, Platform, StatusBar, 
     ScrollView, RefreshControl
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import { client, urlFor } from '../sanity/sanityClient';
@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import NewOrderPopup from '../components/NewOrderPopup'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Audio } from 'expo-av'; // 1. Audio Import Kara
 
 const LAST_READ_ANNOUNCEMENT_KEY = 'lastReadAnnouncementId';
 
@@ -53,8 +54,39 @@ const HomeScreen = () => {
   const [newOrder, setNewOrder] = useState(null); 
   const [seenOrderIds, setSeenOrderIds] = useState([]);
   const pollerRef = useRef(null); 
-  const [refreshing, setRefreshing] = useState(false); // Pull-to-refresh
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false); // Bell dot
+  const [refreshing, setRefreshing] = useState(false); 
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false); 
+
+  // 2. Sound Reference
+  const soundRef = useRef(null);
+
+  // --- 3. SOUND FUNCTIONS ADDED ---
+  const playAlertSound = async () => {
+    try {
+      if (soundRef.current) { await soundRef.current.unloadAsync(); }
+      
+      const { sound } = await Audio.Sound.createAsync(
+        require('../../assets/notification.mp3'), // Make sure this file exists
+        { isLooping: true, shouldPlay: true }
+      );
+      soundRef.current = sound;
+      await sound.playAsync();
+    } catch (error) {
+      console.log("Sound Error:", error);
+    }
+  };
+
+  const stopAlertSound = async () => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+    } catch (error) {
+      // Ignore cleanup errors
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -82,7 +114,6 @@ const HomeScreen = () => {
       });
       setHasActiveRide(data.activeRide > 0);
       
-      // Bell dot eka update karanawa
       if (data.newestAnnouncementId && data.newestAnnouncementId !== lastReadId) {
         setHasUnreadNotifications(true);
       } else {
@@ -97,28 +128,24 @@ const HomeScreen = () => {
     }
   };
 
-  // Pull-to-refresh
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchData();
   }, [user]);
 
-  // Screen ekata apu gaman
   useFocusEffect(
     useCallback(() => {
       setIsLoading(true);
       fetchData();
+      return () => {
+          stopAlertSound(); // Cleanup sound on blur
+      };
     }, [user])
   );
   
- // src/screens/HomeScreen.js (Relevant Part Only - Poll Logic)
-
-// ... (imports and other code same)
-
     const pollForOrders = async () => {
         if (newOrder || hasActiveRide) return; 
         try {
-            // --- (FIX) Address Mapping Added ---
             const query = `
                 *[_type == "foodOrder" && 
                   orderStatus == "readyForPickup" && 
@@ -130,7 +157,7 @@ const HomeScreen = () => {
                     receiverName,
                     restaurant->{ 
                         name, 
-                        "address": addressText  // <-- MEKA THAMAI ADDRESS FIX EKA
+                        "address": addressText
                     }
                 }
             `;
@@ -138,27 +165,45 @@ const HomeScreen = () => {
             if (orderData) {
                 setNewOrder(orderData);
                 setSeenOrderIds(prev => [...prev, orderData._id]);
+                playAlertSound(); // 4. Play Sound when Poller finds order
             }
         } catch (err) { console.log("Polling error: ", err); }
     };
 
-// ... (Rest of the file same)
+  // Listener Logic
   useEffect(() => {
     if (isOnline && !hasActiveRide) {
         pollerRef.current = setInterval(pollForOrders, 5000); 
+        
+        // Setup Realtime Listener as backup
+        const subscription = client.listen(
+            `*[_type == "foodOrder" && orderStatus == "readyForPickup" && !(_id in $seenOrderIds)]`
+        ).subscribe(update => {
+            if (update.transition === 'appear' && !newOrder) {
+                 pollForOrders(); // Trigger poll immediately
+            }
+        });
+        
+        return () => {
+            clearInterval(pollerRef.current);
+            subscription.unsubscribe();
+            stopAlertSound(); // Cleanup sound
+        };
     } else {
         clearInterval(pollerRef.current);
+        stopAlertSound();
     }
-    return () => clearInterval(pollerRef.current);
   }, [isOnline, seenOrderIds, newOrder, hasActiveRide]); 
   
   const handleAcceptOrder = () => {
+    stopAlertSound(); // 5. Stop Sound on Accept
     const orderId = newOrder._id;
     setNewOrder(null);
     navigation.navigate('OrderDetailsScreen', { orderId: orderId });
   };
   
   const handleIgnoreOrder = () => {
+    stopAlertSound(); // 6. Stop Sound on Ignore
     setNewOrder(null); 
   };
   
@@ -177,6 +222,8 @@ const HomeScreen = () => {
       if (newStatus) { 
         setSeenOrderIds([]);
         fetchData(); 
+      } else {
+          stopAlertSound(); // Stop sound if going offline
       }
     } catch (err) {
       setIsOnline(!newStatus);
@@ -188,7 +235,7 @@ const HomeScreen = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.safeArea, { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }]}>
+      <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primaryYellow} />
           <Text style={styles.loadingText}>Loading Dashboard...</Text>
@@ -198,7 +245,7 @@ const HomeScreen = () => {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }]}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.lightBackground} />
       
       <View style={styles.header}>
@@ -212,7 +259,7 @@ const HomeScreen = () => {
         <View style={styles.headerRight}>
           <TouchableOpacity 
             onPress={() => {
-                setHasUnreadNotifications(false); // Click karapu gaman dot eka nathi karanawa
+                setHasUnreadNotifications(false); 
                 navigation.navigate('NotificationScreen');
             }} 
             style={styles.profileIcon}
@@ -304,7 +351,7 @@ const HomeScreen = () => {
                 </Text>
               </View>
               <Text style={styles.recentOrderPrice}>
-                LKR {formatCurrency((order.deliveryCharge || 0) * 0.70)}
+                LKR {formatCurrency((order.deliveryCharge || 0) * 0.65)}
               </Text>
             </View>
           ))

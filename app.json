@@ -1,46 +1,56 @@
 {
   "expo": {
     "name": "RapidGo Rider",
-    "slug": "RapidGo_Rider",
+    "slug": "rapidgo-rider",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rapidgo.rider"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.rapidgo.rider",
+      "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyBJNvG1poWaJjVEpiuMvPpPSo7TpgnZgY4"
         }
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.dchamindu826.RapidGo_Rider"
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "FOREGROUND_SERVICE",
+        "NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
+    "plugins": [
+    "./plugins/withAndroidNotificationSound.js", 
+    "expo-notifications",
+    "expo-location",
+    [
+      "expo-image-picker",
+      {
+        "photosPermission": "The app accesses your photos to take and upload a profile picture."
+      }
+    ]
+  ],
+  
     "extra": {
       "eas": {
-        "projectId": "70b0e8c1-5530-4c0f-87ff-df029da56f1a"
+        "projectId": "6b3bdd41-3cc2-4890-814b-89fdb2253ca7"
       }
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/70b0e8c1-5530-4c0f-87ff-df029da56f1a"
     }
   }
 }

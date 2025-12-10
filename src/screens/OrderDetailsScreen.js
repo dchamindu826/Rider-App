@@ -183,7 +183,7 @@ const OrderDetailsScreen = () => {
                     <Ionicons name="wallet-outline" size={24} color={COLORS.success} />
                     <View style={styles.earningHintTextBox}> 
                         <Text style={styles.earningHintText}>
-                            Your earning from this ride: <Text style={{fontWeight: 'bold'}}> LKR {formatCurrency(fullDeliveryCharge * 0.70)}</Text>
+                            Your earning from this ride: <Text style={{fontWeight: 'bold'}}> LKR {formatCurrency(fullDeliveryCharge * 0.65)}</Text>
                         </Text>
                     </View>
                 </View>

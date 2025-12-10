@@ -49,9 +49,9 @@ const NewOrderPopup = ({ order, isVisible, onAccept, onIgnore }) => {
     }
 
     // --- (FIX) Earning Logic Updated ---
-    // perKmCharge nemei, deliveryCharge eken 70% gannawa
+    // perKmCharge nemei, deliveryCharge eken 65% gannawa
     const deliveryFee = order.deliveryCharge || 0;
-    const riderEarning = deliveryFee * 0.70; 
+    const riderEarning = deliveryFee * 0.65; 
     const foodTotal = order.foodTotal || 0;
 
     const timerWidth = progressAnim.interpolate({
