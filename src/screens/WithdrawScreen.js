@@ -1,8 +1,8 @@
 // src/screens/WithdrawScreen.js
-// --- FINAL FIX: (Bank Account Select Karana Logic Eka) ---
+// --- FINAL FIX: Custom Alert & Logic ---
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, StatusBar, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, StatusBar, TouchableOpacity, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { COLORS } from '../theme/colors';
@@ -11,10 +11,10 @@ import { client } from '../sanity/sanityClient';
 import CustomButton from '../components/CustomButton';
 import CustomTextInput from '../components/CustomTextInput';
 import CustomModalPicker from '../components/CustomModalPicker';
+import CustomAlert from '../components/CustomAlert'; // <--- NEW IMPORT
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 
-// Comma danna function eka
 const formatCurrency = (amount) => {
     if (typeof amount !== 'number') { amount = parseFloat(amount) || 0; }
     return amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -29,10 +29,14 @@ const WithdrawScreen = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [selectedAccountKey, setSelectedAccountKey] = useState(null); 
     const [amount, setAmount] = useState('');
+    
+    // Alert State
+    const [showAlert, setShowAlert] = useState(false);
+    const [alertMessage, setAlertMessage] = useState('');
 
     const bankAccountItems = user?.bankAccounts?.map(acc => ({
         label: `${acc.bankName} (...${acc.accountNumber.slice(-4)})`,
-        value: acc._key, // Key eka value ekata gannawa
+        value: acc._key,
     })) || [];
 
     const handleWithdraw = async () => {
@@ -47,8 +51,6 @@ const WithdrawScreen = () => {
             Toast.show({ type: 'error', text1: 'No Bank Account' }); return;
         }
 
-        // --- (!!!) ASLI FIX EKA MEKE (!!!) ---
-        // Key eka use karala, hari account eke details gannawa
         const selectedAccount = user.bankAccounts.find(acc => acc._key === selectedAccountKey);
 
         if (!selectedAccount) {
@@ -62,7 +64,6 @@ const WithdrawScreen = () => {
                 rider: { _type: 'reference', _ref: user._id },
                 amount: withdrawAmount,
                 status: 'pending',
-                // Dan hari details tika save wenawa
                 bankName: selectedAccount.bankName,
                 accountNumber: selectedAccount.accountNumber,
                 accountName: selectedAccount.accountName,
@@ -70,11 +71,9 @@ const WithdrawScreen = () => {
             await client.create(doc);
             
             setIsSaving(false);
-            Alert.alert(
-                'Request Sent!',
-                `Your withdrawal request of LKR ${formatCurrency(withdrawAmount)} has been sent for admin approval.`
-            );
-            navigation.goBack();
+            // Custom Alert eka pennanawa
+            setAlertMessage(`Your withdrawal request of LKR ${formatCurrency(withdrawAmount)} has been sent for admin approval.`);
+            setShowAlert(true);
 
         } catch (err) {
             setIsSaving(false);
@@ -83,11 +82,14 @@ const WithdrawScreen = () => {
         }
     };
 
+    const handleAlertConfirm = () => {
+        setShowAlert(false);
+        navigation.goBack();
+    };
+
     return (
         <SafeAreaView style={[styles.safeArea, { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }]}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
                 
                 <View style={styles.headerContainer}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -128,6 +130,16 @@ const WithdrawScreen = () => {
                         />
                     </View>
                 </ScrollView>
+
+                {/* --- CUSTOM ALERT COMPONENT --- */}
+                <CustomAlert 
+                    isVisible={showAlert}
+                    title="Request Sent!"
+                    message={alertMessage}
+                    onConfirm={handleAlertConfirm}
+                    confirmText="OK"
+                />
+
             </KeyboardAvoidingView>
         </SafeAreaView>
     );

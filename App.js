@@ -12,54 +12,18 @@ import { Platform, LogBox } from 'react-native';
 LogBox.ignoreLogs([
   'NetworkError',
   'Cannot open, already sending',
-  'EventSource'
+  'EventSource',
+  'expo-notifications' // Deprecation warnings ignore karanna
 ]);
 
-// 🚨 SOUND LOOP CONFIGURATION
-const REPEAT_SOUND_COUNT = 4; // 4 times loop
-
+// --- FIX: Notification handler eka simple kala ---
+// Dan loop wenne na, eka notification ekak witharak pennanawa
 Notifications.setNotificationHandler({
-  handleNotification: async (notification) => {
-    const { data } = notification.request.content;
-
-    // --- CASE 1: ORDER POOL (LOOP SOUND) ---
-    // Order ekak Pool ekata watunama meka Wada karanawa
-    if (data.type === 'order_pool') {
-        
-        // 4 Parak Schedule Karanawa
-        for (let i = 0; i < REPEAT_SOUND_COUNT; i++) {
-            await Notifications.scheduleNotificationAsync({
-                content: {
-                    title: notification.request.content.title,
-                    body: notification.request.content.body,
-                    data: data,
-                    sound: 'notification.mp3', // Rider App Sound File
-                    channelId: 'order-pool', 
-                },
-                trigger: {
-                    // Mulma eka 0.1s walin, itapasse hema 3s walatama sarayak
-                    seconds: i === 0 ? 0.1 : 3 * i, 
-                    repeats: false,
-                },
-            });
-        }
-        
-        // Original Notification eka Silence karanawa (Double sound nathi wenna)
-        return { 
-          shouldShowAlert: true, 
-          shouldPlaySound: false, 
-          shouldSetBadge: true, 
-        };
-    }
-
-    // --- CASE 2: NORMAL NOTIFICATIONS ---
-    // Announcements wage dewal walata eka parai wadinne
-    return {
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    };
-  },
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
 });
 
 const App = () => {
@@ -73,13 +37,13 @@ const App = () => {
         lightColor: '#FF231F7C',
       });
       
-      // 2. Rider Order Pool Channel (High Priority)
+      // 2. Rider Order Pool Channel (Sound eka meken enawa)
       Notifications.setNotificationChannelAsync('order-pool', {
         name: 'Order Pool Alerts',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 500, 200, 500],
         lightColor: '#FFD700',
-        sound: 'notification.mp3' // Channel ekatath sound eka denawa
+        sound: 'notification.mp3' 
       });
     }
   }, []);

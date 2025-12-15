@@ -171,15 +171,19 @@ const HomeScreen = () => {
     };
 
   // Listener Logic
+  // Listener Logic
   useEffect(() => {
     if (isOnline && !hasActiveRide) {
         pollerRef.current = setInterval(pollForOrders, 5000); 
         
-        // Setup Realtime Listener as backup
+        // --- FIX: Query eken parameter eka ain kala ---
+        // Listener eka run wenne aluth order ekak 'appear' unoth witharai.
+        // Filter kirima pollForOrders() athule wenawa.
         const subscription = client.listen(
-            `*[_type == "foodOrder" && orderStatus == "readyForPickup" && !(_id in $seenOrderIds)]`
+            `*[_type == "foodOrder" && orderStatus == "readyForPickup"]`
         ).subscribe(update => {
             if (update.transition === 'appear' && !newOrder) {
+                 console.log("New order detected by listener!");
                  pollForOrders(); // Trigger poll immediately
             }
         });
@@ -190,10 +194,10 @@ const HomeScreen = () => {
             stopAlertSound(); // Cleanup sound
         };
     } else {
-        clearInterval(pollerRef.current);
+        if (pollerRef.current) clearInterval(pollerRef.current);
         stopAlertSound();
     }
-  }, [isOnline, seenOrderIds, newOrder, hasActiveRide]); 
+  }, [isOnline, seenOrderIds, newOrder, hasActiveRide]);
   
   const handleAcceptOrder = () => {
     stopAlertSound(); // 5. Stop Sound on Accept

@@ -93,12 +93,6 @@ const NewOrderPopup = ({ order, isVisible, onAccept, onIgnore }) => {
                         <Text style={styles.value}>LKR {foodTotal.toFixed(2)}</Text>
                     </View>
 
-                    <View style={styles.row}>
-                        <Ionicons name="wallet-outline" size={20} color={COLORS.success} style={styles.icon} />
-                        <Text style={[styles.label, styles.earningLabel]}>Your Earning:</Text>
-                        <Text style={[styles.value, styles.earningValue]}>LKR {riderEarning.toFixed(2)}</Text>
-                    </View>
-
                     <View style={styles.buttonContainer}>
                         <CustomButton
                             title={`Ignore (${countdown}s)`}

@@ -97,13 +97,31 @@ const RiderMapScreen = () => {
         Linking.openURL(`tel:${number}`);
     };
 
+    // ... kalin imports ...
+
+    // --- FIX 1: Local State Update (Ekapara UI eka maru wenna) ---
     const handleCollected = async () => {
         setIsUpdatingStatus(true);
         try {
+            // 1. Server eka update karanawa
             await client.patch(currentOrder._id).set({ orderStatus: 'onTheWay' }).commit();
-            fetchActiveOrder();
-        } catch (err) { Toast.show({ type: 'error', text1: 'Failed' }); }
-        finally { setIsUpdatingStatus(false); setSwipeResetKey(prev => prev + 1); }
+            
+            // 2. UI eka kelinma update karanawa (Fetch wenakan inne na)
+            setCurrentOrder(prev => ({
+                ...prev,
+                orderStatus: 'onTheWay'
+            }));
+
+            // 3. Button eka aluth karanna (Next step ekata)
+            setSwipeResetKey(prev => prev + 1);
+            Toast.show({ type: 'success', text1: 'Status Updated', text2: 'Head to the customer!' });
+
+        } catch (err) { 
+            Toast.show({ type: 'error', text1: 'Failed to update status' });
+            setSwipeResetKey(prev => prev + 1); // Error awath button reset karanawa
+        } finally { 
+            setIsUpdatingStatus(false); 
+        }
     };
 
     const handleCompleted = async () => {
@@ -114,11 +132,19 @@ const RiderMapScreen = () => {
             tx.patch(currentOrder._id, p => p.set({ orderStatus: 'completed' }));
             tx.patch(user._id, p => p.setIfMissing({ walletBalance: 0 }).inc({ walletBalance: earning }));
             await tx.commit();
+            
+            // 4. Order eka iwarai, Home ekata yanna
             setCurrentOrder(null);
-            navigation.navigate('Home');
-        } catch (err) { Toast.show({ type: 'error', text1: 'Failed' }); }
-        finally { setIsUpdatingStatus(false); setSwipeResetKey(prev => prev + 1); }
+            navigation.navigate('Home'); 
+            
+        } catch (err) { 
+            Toast.show({ type: 'error', text1: 'Failed to complete order' });
+            setSwipeResetKey(prev => prev + 1); 
+        } finally { 
+            setIsUpdatingStatus(false); 
+        }
     };
+
 
     const handleCancelSubmit = async (reason) => {
         setIsCancelModalVisible(false);
