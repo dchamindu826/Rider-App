@@ -1,6 +1,8 @@
+// App.js
+
 import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import AppNavigator from './src/navigation/RiderNavigator';
+import AppNavigator, { navigationRef } from './src/navigation/RiderNavigator'; // navigationRef එක import කළා
 import { StatusBar } from 'expo-status-bar';
 import { COLORS } from './src/theme/colors';
 import Toast from 'react-native-toast-message';
@@ -8,16 +10,13 @@ import { AuthProvider } from './src/context/AuthContext';
 import * as Notifications from 'expo-notifications';
 import { Platform, LogBox } from 'react-native'; 
 
-// Ignore warning logs
 LogBox.ignoreLogs([
   'NetworkError',
   'Cannot open, already sending',
   'EventSource',
-  'expo-notifications' // Deprecation warnings ignore karanna
+  'expo-notifications'
 ]);
 
-// --- FIX: Notification handler eka simple kala ---
-// Dan loop wenne na, eka notification ekak witharak pennanawa
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -28,8 +27,8 @@ Notifications.setNotificationHandler({
 
 const App = () => {
   useEffect(() => {
+    // Android Channels setup
     if (Platform.OS === 'android') {
-      // 1. Default Channel
       Notifications.setNotificationChannelAsync('default', {
         name: 'default',
         importance: Notifications.AndroidImportance.MAX,
@@ -37,7 +36,6 @@ const App = () => {
         lightColor: '#FF231F7C',
       });
       
-      // 2. Rider Order Pool Channel (Sound eka meken enawa)
       Notifications.setNotificationChannelAsync('order-pool', {
         name: 'Order Pool Alerts',
         importance: Notifications.AndroidImportance.MAX,
@@ -46,6 +44,21 @@ const App = () => {
         sound: 'notification.mp3' 
       });
     }
+
+   
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log("Notification clicked, redirecting...");
+      
+      // Navigation 
+      if (navigationRef.isReady()) {
+        navigationRef.navigate('NotificationScreen');
+      }
+    });
+
+    return () => {
+      // Listener 
+      Notifications.removeNotificationSubscription(responseListener);
+    };
   }, []);
 
   return (

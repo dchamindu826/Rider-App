@@ -1,14 +1,16 @@
 // src/navigation/RiderNavigator.js
-// --- FINAL FIX: (Aluth Screens 3ma Add Kala) ---
 
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native'; // createNavigationContainerRef එකතු කළා
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import { useAuth, AuthProvider } from '../context/AuthContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+
+// Navigation reference එකක් සාදා export කිරීම (App.js හි භාවිතයට)
+export const navigationRef = createNavigationContainerRef();
 
 // --- Okkoma Screens ---
 import HomeScreen from '../screens/HomeScreen';
@@ -79,7 +81,8 @@ function RiderNavigator() {
     }
 
     return (
-        <NavigationContainer>
+        // ref={navigationRef} 
+        <NavigationContainer ref={navigationRef}>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 {isAuthenticated ? (
                     <>
@@ -89,22 +92,9 @@ function RiderNavigator() {
                         <Stack.Screen name="WithdrawScreen" component={WithdrawScreen} options={{ presentation: 'modal' }} />
                         <Stack.Screen name="RiderPaymentSettings" component={RiderPaymentSettingsScreen} options={{ presentation: 'modal' }} />
                         
-                        {/* --- ALUTH SCREEN 3 ADD KALA --- */}
-                        <Stack.Screen 
-                            name="EditProfileScreen" 
-                            component={EditProfileScreen} 
-                            options={{ presentation: 'modal' }} 
-                        />
-                        <Stack.Screen 
-                            name="HelpScreen" 
-                            component={HelpScreen} 
-                            options={{ presentation: 'modal' }} 
-                        />
-                        <Stack.Screen 
-                            name="AgreementScreen" 
-                            component={AgreementScreen} 
-                            options={{ presentation: 'modal' }} 
-                        />
+                        <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} options={{ presentation: 'modal' }} />
+                        <Stack.Screen name="HelpScreen" component={HelpScreen} options={{ presentation: 'modal' }} />
+                        <Stack.Screen name="AgreementScreen" component={AgreementScreen} options={{ presentation: 'modal' }} />
                     </>
                 ) : (
                     <>
